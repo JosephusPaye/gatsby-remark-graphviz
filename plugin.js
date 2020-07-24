@@ -102,20 +102,39 @@ function optimize(svgSource, svgoPlugins, callback) {
     });
 }
 
-function generate(svg, dotSource) {
+function generate(
+  svg,
+  dotSource,
+  { firstCommentIsCaption, generateAriaDescription } = {}
+) {
   // Gets the starting comments in the graph, to use as alt text
   const { startingComments, body: code } = extractStartingComments(dotSource);
+  const caption = firstCommentIsCaption ? startingComments[0] : undefined;
+
+  // The rest of this function generates the aria description, so we abort early
+  // with the caption if the user has opted out of generating the description
+  if (!generateAriaDescription) {
+    return {
+      svg,
+      caption,
+    };
+  }
+
+  const codeString = code.join('\n');
+  const startingCommentsString = startingComments
+    .slice(firstCommentIsCaption ? 1 : 0)
+    .join('\n');
 
   // For accessibility, we modify the SVG to include 'role' and 'aria-label' attributes,
   // and insert a <title> and <desc> at the root (https://stackoverflow.com/a/4756461)
-  const title = startingComments
-    ? escapeHtml(startingComments)
-    : 'SVG diagram of graph generated from DOT notation';
-  const desc = escapeHtml(code);
-  const ariaLabel = startingComments
-    ? escapeAttribute(startingComments)
-    : 'SVG diagram of graph generated from DOT notation: ' +
-      escapeAttribute(code);
+  const title = startingCommentsString
+    ? escapeHtml(startingCommentsString)
+    : 'SVG diagram of a graph generated from DOT notation';
+  const desc = escapeHtml(codeString);
+  const ariaLabel = startingCommentsString
+    ? escapeAttribute(startingCommentsString)
+    : 'SVG diagram of a graph generated from DOT notation: ' +
+      escapeAttribute(codeString);
 
   const svgPartsRegex = /(<svg)(?<attributes>[\S\s]*?)>(?<body>[\S\s]*?)<\/svg>/;
   const found = svg.match(svgPartsRegex);
@@ -126,7 +145,10 @@ function generate(svg, dotSource) {
   let body = found.groups.body || '';
   body = `<title>${title}</title><desc>${desc}</desc>` + body;
 
-  return `<svg ${attributes}>${body}</svg>`;
+  return {
+    svg: `<svg ${attributes}>${body}</svg>`,
+    caption,
+  };
 }
 
 // Lines that start with 'digraph', 'graph', or 'strict', without a '#' at
@@ -155,8 +177,8 @@ function extractStartingComments(code) {
   lines.unshift(line);
 
   return {
-    startingComments: commentLines.join('\n'),
-    body: lines.join('\n'),
+    startingComments: commentLines,
+    body: lines,
   };
 }
 

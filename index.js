@@ -10,6 +10,10 @@ const defaultPluginOptions = {
   optimize: true,
   wrapperTag: 'div',
   wrapperClass: 'remark-graphviz-graph',
+  figureClass: 'remark-graviz-figure',
+  figcaptionClass: 'remark-graviz-figcaption',
+  firstCommentIsCaption: true,
+  generateAriaDescription: true,
 };
 
 const languageTags = [
@@ -24,12 +28,25 @@ const languageTags = [
 
 module.exports = function gatsbyRemarkGraphviz(
   { markdownAST, reporter },
-  { optimize, wrapperClass, wrapperTag, svgoPlugins } = {}
+  {
+    optimize,
+    wrapperTag,
+    wrapperClass,
+    figureClass,
+    figcaptionClass,
+    generateAriaDescription,
+    firstCommentIsCaption,
+    svgoPlugins,
+  } = {}
 ) {
   const options = merge(defaultPluginOptions, {
     optimize,
-    wrapperClass,
     wrapperTag,
+    wrapperClass,
+    figureClass,
+    figcaptionClass,
+    firstCommentIsCaption,
+    generateAriaDescription,
   });
 
   visit(markdownAST, 'code', (node) => {
@@ -46,13 +63,27 @@ module.exports = function gatsbyRemarkGraphviz(
           ? optimizeSync(compiled, svgoPlugins)
           : compiled;
 
-        // Generate the SVG with accessibility information
-        const svg = generate(optimized, node.value);
+        // Generate the SVG with accessibility information if enabled
+        const { svg, caption } = generate(optimized, node.value, {
+          firstCommentIsCaption: options.firstCommentIsCaption,
+          generateAriaDescription: options.generateAriaDescription,
+        });
 
         // Replace the code node in the AST with the generated SVG, wrapped in a container
         node.type = 'html';
         node.children = undefined;
-        node.value = `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>`;
+
+        if (options.firstCommentIsCaption) {
+          node.value =
+            `<figure class="${options.figureClass}">` +
+            `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>` +
+            `<figcaption class="${options.figcaptionClass}">${
+              caption || ''
+            }</figcaption>` +
+            `</figure>`;
+        } else {
+          node.value = `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>`;
+        }
       } catch (error) {
         reporter.error(
           '[gatsby-remark-graphviz]: GraphViz compilation failed: ' + error

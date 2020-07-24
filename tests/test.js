@@ -37,12 +37,14 @@ test('extractStartingComments()', () => {
       'strict',
       'digraph',
       'graph',
-    ].join('\n'),
-    body: `    graph {
-        A -> B; # Connect A to B
-        # Connect B back to A
-        B -> A;
-    }`,
+    ],
+    body: [
+      '    graph {',
+      '        A -> B; # Connect A to B',
+      '        # Connect B back to A',
+      '        B -> A;',
+      '    }',
+    ],
   });
 });
 
@@ -89,9 +91,10 @@ test('optimize()', async () => {
   assert.snapshot(optimized.trim(), snapshot('optimize.svg').trim());
 });
 
-test('generate()', async () => {
+test('generate() with caption and description', async () => {
   const graph = `
     # A simple digraph that connects two nodes in both directions
+    # A more detailed description of the graph here
     digraph {
       A -> B; # Connect A to B
       B -> A; # Connect B back to A
@@ -100,9 +103,80 @@ test('generate()', async () => {
 
   const compiled = await compile(graph, 'svg', 'dot');
   const optimized = await optimize(compiled);
-  const svg = generate(optimized, graph);
+  const { svg, caption } = generate(optimized, graph, {
+    firstCommentIsCaption: true,
+    generateAriaDescription: true,
+  });
 
   assert.snapshot(svg.trim(), snapshot('generate.svg').trim());
+  assert.equal(
+    caption,
+    'A simple digraph that connects two nodes in both directions'
+  );
+});
+
+test('generate() with caption, no description', async () => {
+  const graph = `
+      # A simple digraph that connects two nodes in both directions
+      # A more detailed description of the graph here
+      digraph {
+        A -> B; # Connect A to B
+        B -> A; # Connect B back to A
+      }
+    `.trim();
+
+  const compiled = await compile(graph, 'svg', 'dot');
+  const optimized = await optimize(compiled);
+  const { svg, caption } = generate(optimized, graph, {
+    firstCommentIsCaption: true,
+    generateAriaDescription: false,
+  });
+
+  assert.snapshot(svg.trim(), snapshot('generate-no-description.svg').trim());
+  assert.equal(
+    caption,
+    'A simple digraph that connects two nodes in both directions'
+  );
+});
+
+test('generate() with description, no caption', async () => {
+  const graph = `
+        # A simple digraph that connects two nodes in both directions
+        digraph {
+          A -> B; # Connect A to B
+          B -> A; # Connect B back to A
+        }
+      `.trim();
+
+  const compiled = await compile(graph, 'svg', 'dot');
+  const optimized = await optimize(compiled);
+  const { svg, caption } = generate(optimized, graph, {
+    firstCommentIsCaption: false,
+    generateAriaDescription: true,
+  });
+
+  assert.snapshot(svg.trim(), snapshot('generate-no-caption.svg').trim());
+  assert.equal(caption, undefined);
+});
+
+test('generate() with no caption, no description', async () => {
+  const graph = `
+        # A simple digraph that connects two nodes in both directions
+        digraph {
+          A -> B; # Connect A to B
+          B -> A; # Connect B back to A
+        }
+      `.trim();
+
+  const compiled = await compile(graph, 'svg', 'dot');
+  const optimized = await optimize(compiled);
+  const { svg, caption } = generate(optimized, graph, {
+    firstCommentIsCaption: false,
+    generateAriaDescription: false,
+  });
+
+  assert.snapshot(svg.trim(), optimized.trim());
+  assert.equal(caption, undefined);
 });
 
 test.run();
