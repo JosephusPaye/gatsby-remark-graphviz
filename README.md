@@ -1,4 +1,4 @@
-# gatsby-remark-graphviz
+# Graphviz for Gatsby Remark
 
 Intercepts code-blocks written in [DOT](<https://en.wikipedia.org/wiki/DOT_(graph_description_language)>) in your Markdown files and compiles them to SVG using GraphViz. Provides a quick and easy way to draw vector diagrams that are easy to modify and update.
 
@@ -11,7 +11,7 @@ This project is part of [#CreateWeekly](https://dev.to/josephuspaye/createweekly
 ## Install
 
 ```bash
-npm install --save gatsby-remark-graphviz
+npm install --save @josephuspaye/gatsby-remark-graphviz
 ```
 
 ## How to use
@@ -25,7 +25,9 @@ module.exports = {
     {
       resolve: 'gatsby-transformer-remark',
       options: {
-        plugins: ['gatsby-remark-graphviz'],
+        plugins: [
+          '@josephuspaye/gatsby-remark-graphviz' // place before other plugins that modify code blocks, such as 'gatsby-remark-prismjs'
+        ],
       },
     },
   ],
@@ -126,7 +128,7 @@ module.exports = {
       options: {
         plugins: [
           {
-            resolve: 'gatsby-remark-graphviz',
+            resolve: '@josephuspaye/gatsby-remark-graphviz',
             options: {
               generateAriaDescription: true,
               optimize: true,
