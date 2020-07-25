@@ -1,7 +1,7 @@
 {
   "name": "@josephuspaye/gatsby-remark-graphviz",
   "description": "Gatsby plugin to compile DOT code-blocks into SVG images in markdown processed by Remark",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "author": "Josephus Paye II <j.paye96@gmail.com>",
   "main": "index.js",
   "license": "MIT",
