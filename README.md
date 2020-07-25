@@ -77,7 +77,7 @@ Generates the following image:
 
 </figure>
 
-<br>
+<br><br>
 
 From the following HTML (formatted for reading):
 
@@ -135,12 +135,12 @@ module.exports = {
               svgoPlugins: {
                 inlineStyles: false,
                 removeTitle: false,
-                wrapperTag: 'span',
-                wrapperClass: 'my-graph-wapper is-fullwidth',
-                firstCommentIsCaption: true,
-                figureClass: 'my-graph-figure',
-                figcaptionClass: 'my-graph-figcaption',
               },
+              wrapperTag: 'span',
+              wrapperClass: 'my-graph-wapper is-fullwidth',
+              firstCommentIsCaption: true,
+              figureClass: 'my-graph-figure',
+              figcaptionClass: 'my-graph-figcaption',
             },
           },
         ],
