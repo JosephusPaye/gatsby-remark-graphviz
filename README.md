@@ -46,6 +46,8 @@ These tags are GraphViz layout algorithms, and more details about them can be fo
 
 By default, the first `#` comment at the start of the code block will be used as the image caption, and subsequent `#` comments at the start of the code block will be used as alt text (see **Options** below).
 
+See [GraphViz Pocket Reference](https://graphs.grevian.org/) for an introduction to GraphViz and how to write graphs using DOT.
+
 ## Example
 
 The following code block written in Markdown:
