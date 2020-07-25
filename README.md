@@ -4,6 +4,8 @@ Intercepts code-blocks written in [DOT](<https://en.wikipedia.org/wiki/DOT_(grap
 
 This is a sub-plugin for `gatsby-transformer-remark`. As demoed below, add this plugin to the options of `gatsby-transformer-remark`.
 
+---
+
 This project is part of [#CreateWeekly](https://dev.to/josephuspaye/createweekly-create-something-new-publicly-every-week-in-2020-1nh9), my attempt to create something new publicly every week in 2020.
 
 ## Install
@@ -67,9 +69,11 @@ Generates the following image:
 <figure>
 
 ![SVG image generated from example](./example.svg)
+<figcaption>A diagram showing system dependencies</figcaption>
 
-  <figcaption>A diagram showing system dependencies</figcaption>
 </figure>
+
+<br>
 
 From the following HTML:
 
