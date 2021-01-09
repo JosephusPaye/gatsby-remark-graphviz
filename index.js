@@ -106,9 +106,9 @@ async function generateDiagramAndReplaceNode(
     node.value =
       `<figure class="${options.figureClass}">` +
       `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>` +
-      `<figcaption class="${options.figcaptionClass}">${
-        caption || ''
-      }</figcaption>` +
+      (caption
+        ? `<figcaption class="${options.figcaptionClass}">${caption}</figcaption>`
+        : '') +
       `</figure>`;
   } else {
     node.value = `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>`;
