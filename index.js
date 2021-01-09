@@ -1,10 +1,8 @@
-const deasync = require('deasync');
+// @ts-check
+
 const visit = require('unist-util-visit');
 
 const { compile, optimize, generate } = require('./plugin.js');
-
-const compileSync = deasync(compile);
-const optimizeSync = deasync(optimize);
 
 const defaultPluginOptions = {
   optimize: true,
@@ -37,7 +35,7 @@ module.exports = function gatsbyRemarkGraphviz(
     generateAriaDescription,
     firstCommentIsCaption,
     svgoPlugins,
-  } = {}
+  } = {},
 ) {
   const options = merge(defaultPluginOptions, {
     optimize,
@@ -49,51 +47,73 @@ module.exports = function gatsbyRemarkGraphviz(
     generateAriaDescription,
   });
 
+  const graphvizNodes = [];
+
   visit(markdownAST, 'code', (node) => {
     // The code block language is our layout for GraphViz
     const layout = node.lang ? node.lang.trim().toLowerCase() : '';
 
     if (layout && languageTags.includes(layout)) {
-      try {
-        // Compile the graph using GraphViz
-        const compiled = compileSync(node.value, 'svg', layout);
-
-        // Optimize the SVG with SVGO if the user has allowed it
-        const optimized = options.optimize
-          ? optimizeSync(compiled, svgoPlugins)
-          : compiled;
-
-        // Generate the SVG with accessibility information if enabled
-        const { svg, caption } = generate(optimized, node.value, {
-          firstCommentIsCaption: options.firstCommentIsCaption,
-          generateAriaDescription: options.generateAriaDescription,
-        });
-
-        // Replace the code node in the AST with the generated SVG, wrapped in a container
-        node.type = 'html';
-        node.children = undefined;
-
-        if (options.firstCommentIsCaption) {
-          node.value =
-            `<figure class="${options.figureClass}">` +
-            `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>` +
-            `<figcaption class="${options.figcaptionClass}">${
-              caption || ''
-            }</figcaption>` +
-            `</figure>`;
-        } else {
-          node.value = `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>`;
-        }
-      } catch (error) {
-        reporter.error(
-          '[gatsby-remark-graphviz]: GraphViz compilation failed: ' + error
-        );
-      }
+      graphvizNodes.push({ node, layout });
     }
   });
 
-  return markdownAST;
+  const generations = graphvizNodes.map(({ node, layout }) => {
+    return generateDiagramAndReplaceNode(
+      node,
+      layout,
+      options,
+      svgoPlugins,
+    ).catch((error) => {
+      reporter.error(
+        '[gatsby-remark-graphviz]: GraphViz compilation failed: ' + error,
+      );
+    });
+  });
+
+  return Promise.all(generations).then(() => {
+    return markdownAST;
+  });
 };
+
+async function generateDiagramAndReplaceNode(
+  node,
+  layout,
+  options,
+  svgoPlugins,
+) {
+  // Compile the graph using GraphViz
+  const compiled = await compile(node.value, 'svg', layout);
+
+  let optimized = compiled;
+
+  // Optimize the SVG with SVGO if the user has allowed it
+  if (options.optimize) {
+    optimized = await optimize(compiled, svgoPlugins);
+  }
+
+  // Generate the SVG with accessibility information if enabled
+  const { svg, caption } = generate(optimized, node.value, {
+    firstCommentIsCaption: options.firstCommentIsCaption,
+    generateAriaDescription: options.generateAriaDescription,
+  });
+
+  // Replace the code node in the AST with the generated SVG, wrapped in a container
+  node.type = 'html';
+  node.children = undefined;
+
+  if (options.firstCommentIsCaption) {
+    node.value =
+      `<figure class="${options.figureClass}">` +
+      `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>` +
+      `<figcaption class="${options.figcaptionClass}">${
+        caption || ''
+      }</figcaption>` +
+      `</figure>`;
+  } else {
+    node.value = `<${options.wrapperTag} class="${options.wrapperClass}">${svg}</${options.wrapperTag}>`;
+  }
+}
 
 /**
  * Like Object.assign(), but doesn't modify any of the arguments,
