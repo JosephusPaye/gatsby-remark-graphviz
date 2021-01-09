@@ -27,7 +27,7 @@ Produces the following graph:
 # A graph showing the dependencies in the system
 # Drawn using GraphViz with circo layout
 digraph {
-    A -> B;
+    A -> B [label="AB"];
     B -> C;
     C -> D;
     D -> A;
